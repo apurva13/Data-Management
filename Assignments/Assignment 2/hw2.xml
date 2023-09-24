@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<database>
+    <students>
+        <!-- Student entries will be added here -->
+    </students>
+    
+    <instructors>
+        <!-- Instructor entries will be added here -->
+       </instructors>
+    
+    <courses>
+        <!-- Course entries will be added here -->  
+    </courses>
+
+
+</database>
