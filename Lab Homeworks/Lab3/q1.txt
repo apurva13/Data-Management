@@ -1,0 +1,87 @@
+// a.	Find the name and program of students who are between 25 and 30 years old (inclusive).
+
+db.Student.find({
+  age: {
+    $gte: 25,
+    $lte: 30
+  }
+}, { name: 1, program: 1, _id: 0 })
+
+// b.	Find out which courses are offered in Fall 2023. Report course number and title.
+
+db.Course.find({ semester: "Fall 2023" }, { number: 1, title: 1, _id:0})
+
+// c.	Find out titles of courses in Fall 2023 that contain “data”. (“data” is case insensitive, e.g., “Data” or “DATA” is also considered as “data”)
+
+db.Course.aggregate([
+  { $match: { semester: "Fall 2023" } },
+  { $project: { title: { $toLower: "$title" } } },
+  { $match: { title: { $regex: /data/ } } 
+  }], { title: 1, _id: 0 } 
+)
+
+// d.	Find out which students have taken DSCI 551 in Fall 2023. Report both student ids and names.
+
+db.Take.aggregate([
+    {
+        $match: { cno: "DSCI 551", semester: "Fall 2023" }
+    },
+    {
+        $lookup: {
+            from: "Student",
+            localField: "sid",
+            foreignField: "id",
+            as: "student"
+        }
+    },
+    {
+        $unwind: "$student"
+    },
+    {
+        $project: {
+            sid: "$sid",
+            name: "$student.name",
+            _id: 0
+        }}])
+
+
+// e.	Find out which students did not take any courses in Fall 2023. Report only the student ids.
+
+var studentsWithCourses = db.Take.distinct("sid", { 
+  semester: "Fall 2023" });
+db.Student.find({ id: { $nin: studentsWithCourses } }, { id: 1, _id: 0 })
+
+
+// f.	Find out for each instructor, the number of courses (i.e., how many courses) he/she teaches in Fall 2023.
+
+
+db.Teach.aggregate([
+  {
+    $match: { "semester": "Fall 2023" }
+  },
+  {
+    $group: {
+      _id: "$rid",
+      courseCount: { $sum: 1 }
+    }
+  },
+  {
+    $lookup: {
+      from: "Instructor",
+      localField: "_id",
+      foreignField: "id",
+      as: "instructor"
+    }
+  },
+  {
+    $unwind: "$instructor"
+  },
+  {
+    $project: {
+      "instructor.id": 1,
+      "instructor.name": 1,
+      "courseCount": 1,
+      "_id": 0
+    }
+  }
+])
